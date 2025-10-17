@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, XCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { CheckCircle2, XCircle, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 
 interface Question {
@@ -12,7 +12,7 @@ interface Question {
   correctAnswer: number;
 }
 
-const sampleQuestions: Question[] = [
+const defaultQuestions: Question[] = [
   {
     id: 1,
     question: "What is the capital of France?",
@@ -51,15 +51,26 @@ const sampleQuestions: Question[] = [
 ];
 
 const MCQTest = () => {
+  const [questions, setQuestions] = useState<Question[]>(defaultQuestions);
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [selectedAnswers, setSelectedAnswers] = useState<(number | null)[]>(
-    new Array(sampleQuestions.length).fill(null)
-  );
+  const [selectedAnswers, setSelectedAnswers] = useState<(number | null)[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
-  const [answeredQuestions, setAnsweredQuestions] = useState<boolean[]>(
-    new Array(sampleQuestions.length).fill(false)
-  );
+  const [answeredQuestions, setAnsweredQuestions] = useState<boolean[]>([]);
+
+  // Load teacher's questions from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem("teacherQuestions");
+    if (saved) {
+      const teacherQuestions = JSON.parse(saved);
+      setQuestions(teacherQuestions);
+      setSelectedAnswers(new Array(teacherQuestions.length).fill(null));
+      setAnsweredQuestions(new Array(teacherQuestions.length).fill(false));
+    } else {
+      setSelectedAnswers(new Array(defaultQuestions.length).fill(null));
+      setAnsweredQuestions(new Array(defaultQuestions.length).fill(false));
+    }
+  }, []);
 
   const handleAnswerSelect = (optionIndex: number) => {
     if (showFeedback) return;
@@ -82,7 +93,7 @@ const MCQTest = () => {
 
   const handleNext = () => {
     setShowFeedback(false);
-    if (currentQuestion < sampleQuestions.length - 1) {
+    if (currentQuestion < questions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
     } else {
       // Last question - show final results
@@ -95,7 +106,7 @@ const MCQTest = () => {
   const calculateScore = () => {
     let correct = 0;
     selectedAnswers.forEach((answer, index) => {
-      if (answer === sampleQuestions[index].correctAnswer) {
+      if (answer === questions[index].correctAnswer) {
         correct++;
       }
     });
@@ -106,7 +117,7 @@ const MCQTest = () => {
     const baseClasses =
       "w-full p-4 text-left rounded-lg border-2 transition-all duration-200";
     const selected = selectedAnswers[currentQuestion] === optionIndex;
-    const isCorrect = optionIndex === sampleQuestions[currentQuestion].correctAnswer;
+    const isCorrect = optionIndex === questions[currentQuestion].correctAnswer;
 
     // Show feedback after answer is selected
     if (showFeedback) {
@@ -127,9 +138,9 @@ const MCQTest = () => {
     }`;
   };
 
-  const progress = ((currentQuestion + 1) / sampleQuestions.length) * 100;
+  const progress = ((currentQuestion + 1) / questions.length) * 100;
   const score = calculateScore();
-  const percentage = (score / sampleQuestions.length) * 100;
+  const percentage = (score / questions.length) * 100;
 
   if (showResults) {
     return (
@@ -144,12 +155,12 @@ const MCQTest = () => {
                 </span>
               </div>
               <p className="text-2xl text-muted-foreground">
-                You scored {score} out of {sampleQuestions.length}
+                You scored {score} out of {questions.length}
               </p>
             </div>
 
             <div className="space-y-6">
-              {sampleQuestions.map((q, index) => {
+              {questions.map((q, index) => {
                 const userAnswer = selectedAnswers[index];
                 const isCorrect = userAnswer === q.correctAnswer;
 
@@ -210,10 +221,10 @@ const MCQTest = () => {
               <Button
                 onClick={() => {
                   setCurrentQuestion(0);
-                  setSelectedAnswers(new Array(sampleQuestions.length).fill(null));
+                  setSelectedAnswers(new Array(questions.length).fill(null));
                   setShowResults(false);
                   setShowFeedback(false);
-                  setAnsweredQuestions(new Array(sampleQuestions.length).fill(false));
+                  setAnsweredQuestions(new Array(questions.length).fill(false));
                 }}
                 className="bg-gradient-to-r from-primary to-accent"
                 size="lg"
@@ -235,7 +246,7 @@ const MCQTest = () => {
             MCQ Practice Test
           </h1>
           <p className="text-muted-foreground">
-            Question {currentQuestion + 1} of {sampleQuestions.length}
+            Question {currentQuestion + 1} of {questions.length}
           </p>
         </div>
 
@@ -245,12 +256,12 @@ const MCQTest = () => {
 
         <Card className="p-8 shadow-lg mb-6">
           <h2 className="text-2xl font-semibold mb-6">
-            {sampleQuestions[currentQuestion].question}
+            {questions[currentQuestion].question}
           </h2>
 
           <div className="space-y-3">
-            {sampleQuestions[currentQuestion].options.map((option, index) => {
-              const isCorrect = index === sampleQuestions[currentQuestion].correctAnswer;
+            {questions[currentQuestion].options.map((option, index) => {
+              const isCorrect = index === questions[currentQuestion].correctAnswer;
               const selected = selectedAnswers[currentQuestion] === index;
               
               return (
@@ -295,14 +306,14 @@ const MCQTest = () => {
               className="bg-gradient-to-r from-primary to-accent"
               size="lg"
             >
-              {currentQuestion === sampleQuestions.length - 1 ? "View Results" : "Next Question"}
+              {currentQuestion === questions.length - 1 ? "View Results" : "Next Question"}
               <ChevronRight className="w-5 h-5 ml-2" />
             </Button>
           )}
         </div>
 
         <div className="mt-6 flex gap-2 flex-wrap justify-center">
-          {sampleQuestions.map((_, index) => (
+          {questions.map((_, index) => (
             <button
               key={index}
               onClick={() => setCurrentQuestion(index)}

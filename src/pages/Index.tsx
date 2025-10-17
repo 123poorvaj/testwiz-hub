@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
-import { BookOpen, Clock, Trophy } from "lucide-react";
+import { BookOpen, Clock, Trophy, PenSquare } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -51,7 +51,16 @@ const Index = () => {
           </Card>
         </div>
 
-        <div className="text-center">
+        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          <Button
+            onClick={() => navigate("/create-test")}
+            size="lg"
+            variant="outline"
+            className="text-lg px-8 py-6 border-2 border-primary hover:bg-primary/10"
+          >
+            <PenSquare className="w-5 h-5 mr-2" />
+            Create Question Paper
+          </Button>
           <Button
             onClick={() => navigate("/mcq-test")}
             size="lg"
