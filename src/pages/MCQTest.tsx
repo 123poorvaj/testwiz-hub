@@ -56,8 +56,10 @@ const MCQTest = () => {
     new Array(sampleQuestions.length).fill(null)
   );
   const [showResults, setShowResults] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
+  const [answeredQuestions, setAnsweredQuestions] = useState<boolean[]>(
+    new Array(sampleQuestions.length).fill(false)
+  );
 
   const handleAnswerSelect = (optionIndex: number) => {
     if (showFeedback) return;
@@ -65,20 +67,28 @@ const MCQTest = () => {
     const newAnswers = [...selectedAnswers];
     newAnswers[currentQuestion] = optionIndex;
     setSelectedAnswers(newAnswers);
-    setShowFeedback(true);
+  };
 
-    // Show feedback for 2 seconds, then move to next question
-    setTimeout(() => {
-      setShowFeedback(false);
-      if (currentQuestion < sampleQuestions.length - 1) {
-        setCurrentQuestion(currentQuestion + 1);
-      } else {
-        // Last question - submit automatically
-        setIsSubmitted(true);
-        setShowResults(true);
-        toast.success("Test completed!");
-      }
-    }, 2000);
+  const handleSubmitAnswer = () => {
+    if (selectedAnswers[currentQuestion] === null) {
+      toast.error("Please select an answer first!");
+      return;
+    }
+    setShowFeedback(true);
+    const newAnswered = [...answeredQuestions];
+    newAnswered[currentQuestion] = true;
+    setAnsweredQuestions(newAnswered);
+  };
+
+  const handleNext = () => {
+    setShowFeedback(false);
+    if (currentQuestion < sampleQuestions.length - 1) {
+      setCurrentQuestion(currentQuestion + 1);
+    } else {
+      // Last question - show final results
+      setShowResults(true);
+      toast.success("Test completed!");
+    }
   };
 
 
@@ -202,8 +212,8 @@ const MCQTest = () => {
                   setCurrentQuestion(0);
                   setSelectedAnswers(new Array(sampleQuestions.length).fill(null));
                   setShowResults(false);
-                  setIsSubmitted(false);
                   setShowFeedback(false);
+                  setAnsweredQuestions(new Array(sampleQuestions.length).fill(false));
                 }}
                 className="bg-gradient-to-r from-primary to-accent"
                 size="lg"
@@ -256,25 +266,40 @@ const MCQTest = () => {
                   {option}
                   {showFeedback && isCorrect && (
                     <span className="ml-2 text-success font-semibold">
-                      ✓ Correct
+                      ✓ Correct Answer
                     </span>
                   )}
                   {showFeedback && selected && !isCorrect && (
                     <span className="ml-2 text-error font-semibold">
-                      ✗ Incorrect
+                      ✗ Your Answer
                     </span>
                   )}
                 </button>
               );
             })}
           </div>
-
-          {showFeedback && (
-            <div className="mt-4 text-center text-muted-foreground animate-pulse">
-              Moving to next question...
-            </div>
-          )}
         </Card>
+
+        <div className="flex items-center justify-center gap-4">
+          {!showFeedback ? (
+            <Button
+              onClick={handleSubmitAnswer}
+              className="bg-gradient-to-r from-primary to-accent"
+              size="lg"
+            >
+              Submit Answer
+            </Button>
+          ) : (
+            <Button
+              onClick={handleNext}
+              className="bg-gradient-to-r from-primary to-accent"
+              size="lg"
+            >
+              {currentQuestion === sampleQuestions.length - 1 ? "View Results" : "Next Question"}
+              <ChevronRight className="w-5 h-5 ml-2" />
+            </Button>
+          )}
+        </div>
 
         <div className="mt-6 flex gap-2 flex-wrap justify-center">
           {sampleQuestions.map((_, index) => (
