@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, XCircle, ChevronRight } from "lucide-react";
+import { CheckCircle2, XCircle, ChevronRight, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 interface Question {
   id: number;
@@ -51,6 +52,7 @@ const defaultQuestions: Question[] = [
 ];
 
 const MCQTest = () => {
+  const navigate = useNavigate();
   const [questions, setQuestions] = useState<Question[]>(defaultQuestions);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<(number | null)[]>([]);
@@ -146,6 +148,17 @@ const MCQTest = () => {
     return (
       <div className="min-h-screen bg-background py-12 px-4">
         <div className="max-w-4xl mx-auto">
+          <div className="mb-6">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate("/")}
+              className="gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to Home
+            </Button>
+          </div>
           <Card className="p-8 shadow-lg">
             <div className="text-center mb-8">
               <h1 className="text-4xl font-bold mb-4">Test Results</h1>
@@ -241,6 +254,17 @@ const MCQTest = () => {
   return (
     <div className="min-h-screen bg-background py-12 px-4">
       <div className="max-w-3xl mx-auto">
+        <div className="mb-6">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/")}
+            className="gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Home
+          </Button>
+        </div>
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
             MCQ Practice Test
