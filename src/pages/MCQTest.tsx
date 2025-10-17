@@ -57,36 +57,30 @@ const MCQTest = () => {
   );
   const [showResults, setShowResults] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
 
   const handleAnswerSelect = (optionIndex: number) => {
-    if (isSubmitted) return;
+    if (showFeedback) return;
+    
     const newAnswers = [...selectedAnswers];
     newAnswers[currentQuestion] = optionIndex;
     setSelectedAnswers(newAnswers);
+    setShowFeedback(true);
+
+    // Show feedback for 2 seconds, then move to next question
+    setTimeout(() => {
+      setShowFeedback(false);
+      if (currentQuestion < sampleQuestions.length - 1) {
+        setCurrentQuestion(currentQuestion + 1);
+      } else {
+        // Last question - submit automatically
+        setIsSubmitted(true);
+        setShowResults(true);
+        toast.success("Test completed!");
+      }
+    }, 2000);
   };
 
-  const handleNext = () => {
-    if (currentQuestion < sampleQuestions.length - 1) {
-      setCurrentQuestion(currentQuestion + 1);
-    }
-  };
-
-  const handlePrevious = () => {
-    if (currentQuestion > 0) {
-      setCurrentQuestion(currentQuestion - 1);
-    }
-  };
-
-  const handleSubmit = () => {
-    const unanswered = selectedAnswers.filter((answer) => answer === null).length;
-    if (unanswered > 0) {
-      toast.error(`Please answer all questions. ${unanswered} question(s) remaining.`);
-      return;
-    }
-    setIsSubmitted(true);
-    setShowResults(true);
-    toast.success("Test submitted successfully!");
-  };
 
   const calculateScore = () => {
     let correct = 0;
@@ -102,23 +96,25 @@ const MCQTest = () => {
     const baseClasses =
       "w-full p-4 text-left rounded-lg border-2 transition-all duration-200";
     const selected = selectedAnswers[currentQuestion] === optionIndex;
-
-    if (!isSubmitted) {
-      return `${baseClasses} ${
-        selected
-          ? "border-primary bg-primary/10 shadow-md"
-          : "border-border hover:border-primary/50 hover:bg-muted"
-      }`;
-    }
-
     const isCorrect = optionIndex === sampleQuestions[currentQuestion].correctAnswer;
-    if (isCorrect) {
-      return `${baseClasses} border-success bg-success/10`;
+
+    // Show feedback after answer is selected
+    if (showFeedback) {
+      if (isCorrect) {
+        return `${baseClasses} border-success bg-success/10`;
+      }
+      if (selected && !isCorrect) {
+        return `${baseClasses} border-error bg-error/10`;
+      }
+      return `${baseClasses} border-border opacity-60`;
     }
-    if (selected && !isCorrect) {
-      return `${baseClasses} border-error bg-error/10`;
-    }
-    return `${baseClasses} border-border opacity-60`;
+
+    // Normal state before selection
+    return `${baseClasses} ${
+      selected
+        ? "border-primary bg-primary/10 shadow-md"
+        : "border-border hover:border-primary/50 hover:bg-muted"
+    }`;
   };
 
   const progress = ((currentQuestion + 1) / sampleQuestions.length) * 100;
@@ -207,6 +203,7 @@ const MCQTest = () => {
                   setSelectedAnswers(new Array(sampleQuestions.length).fill(null));
                   setShowResults(false);
                   setIsSubmitted(false);
+                  setShowFeedback(false);
                 }}
                 className="bg-gradient-to-r from-primary to-accent"
                 size="lg"
@@ -242,54 +239,42 @@ const MCQTest = () => {
           </h2>
 
           <div className="space-y-3">
-            {sampleQuestions[currentQuestion].options.map((option, index) => (
-              <button
-                key={index}
-                onClick={() => handleAnswerSelect(index)}
-                className={getOptionClassName(index)}
-                disabled={isSubmitted}
-              >
-                <span className="font-semibold mr-3">
-                  {String.fromCharCode(65 + index)}.
-                </span>
-                {option}
-              </button>
-            ))}
+            {sampleQuestions[currentQuestion].options.map((option, index) => {
+              const isCorrect = index === sampleQuestions[currentQuestion].correctAnswer;
+              const selected = selectedAnswers[currentQuestion] === index;
+              
+              return (
+                <button
+                  key={index}
+                  onClick={() => handleAnswerSelect(index)}
+                  className={getOptionClassName(index)}
+                  disabled={showFeedback}
+                >
+                  <span className="font-semibold mr-3">
+                    {String.fromCharCode(65 + index)}.
+                  </span>
+                  {option}
+                  {showFeedback && isCorrect && (
+                    <span className="ml-2 text-success font-semibold">
+                      ✓ Correct
+                    </span>
+                  )}
+                  {showFeedback && selected && !isCorrect && (
+                    <span className="ml-2 text-error font-semibold">
+                      ✗ Incorrect
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
-        </Card>
 
-        <div className="flex items-center justify-between">
-          <Button
-            onClick={handlePrevious}
-            disabled={currentQuestion === 0}
-            variant="outline"
-            size="lg"
-          >
-            <ChevronLeft className="w-5 h-5 mr-2" />
-            Previous
-          </Button>
-
-          {currentQuestion === sampleQuestions.length - 1 ? (
-            <Button
-              onClick={handleSubmit}
-              disabled={isSubmitted}
-              className="bg-gradient-to-r from-primary to-accent"
-              size="lg"
-            >
-              Submit Test
-            </Button>
-          ) : (
-            <Button
-              onClick={handleNext}
-              disabled={currentQuestion === sampleQuestions.length - 1}
-              className="bg-gradient-to-r from-primary to-accent"
-              size="lg"
-            >
-              Next
-              <ChevronRight className="w-5 h-5 ml-2" />
-            </Button>
+          {showFeedback && (
+            <div className="mt-4 text-center text-muted-foreground animate-pulse">
+              Moving to next question...
+            </div>
           )}
-        </div>
+        </Card>
 
         <div className="mt-6 flex gap-2 flex-wrap justify-center">
           {sampleQuestions.map((_, index) => (
